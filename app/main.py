@@ -1,20 +1,21 @@
-from bs4 import BeautifulSoup as Bs
+from queue import Queue
+from workers.wikiDataWorker import WikiDataWorker
+from workers.postgreDbWorker import PostgreDBScheduler
 
-import pandas as pd
-import psycopg2
-import requests
-import bs4
-from dataclasses import dataclass
-from typing import Optional
+def main(url, query):
 
-@dataclass
-class IMDB:
+    data_queue = Queue()
+    num_of_workers = 4
 
-  
-    
+    wikiWorker = WikiDataWorker(url, query, data_queue)
+    wikiWorker.get_data()
+   
+    for _ in range(num_of_workers):
+        postgre_scheduler = PostgreDBScheduler(data_queue)
+        postgre_scheduler.join()
+        
 if __name__=="__main__":
 
-    from decouple import config
     url = "https://query.wikidata.org/sparql"
 
     query= """
@@ -25,10 +26,11 @@ if __name__=="__main__":
             SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
             }
             """
-    imdb = IMDB(conn, cur, url)
-    data = imdb.fetch_wikidata(query=query)
-    item, itemLabel = data['head']['vars']
-    print(item, itemLabel)
-    results = data['results']['bindings']
+    main(url, query)
+    
+    
+   
+
+ 
     
     

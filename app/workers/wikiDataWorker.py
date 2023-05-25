@@ -1,37 +1,45 @@
 import threading
+from dataclasses import dataclass
+from multiprocessing import Pool, cpu_count
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
+from queue import Queue
 
-class WikiDataWorker(threading.Thread):
-    
-    def __init(self, url, query_string, **kwargs):
-        super(WikiDataWorker, self).__init__(**kwargs)
-        self.start()
-        self._url = url
-        self._query = query_string
+@dataclass
+class WikiDataWorker:
 
-    def run(self):
-        self.fetch_wikidata(self._query)
+    url:str
+    query:str 
+    queue:Queue
+        
+    def get_data(self):
+        """ 
+        fetches the raw data from wikidata.org, extracts the 
+        values of the items and itemLabels and put those in the queue 
+        """
 
-    def fetch_wikidata(self, query:str)->dict:
+        results = self.fetch_wikidata(self.url, self.query)
+        data = results['results']['bindings']
 
-        """ gets the data from wikidata.org based on the query supplied """
-        sparql = SPARQLWrapper(self.url)
+        for record in self.extract_fields(data):
+            self.queue.put(record)
+
+        self.queue.put(None)
+
+    def fetch_wikidata(self, url:str, query:str)->dict:
+        sparql = SPARQLWrapper(url)
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
         return results
 
-    def convert_to_pandas_df(self, results:dict) -> pd.DataFrame:
-
-        """ converts the results obtained from wikidata to pandas dataframe """
-
-        results_df = pd.io.json._normalize(results['results']['bindings'])
-        pandas_df = results_df[['item.value', 'itemLabel.value']]
-        return pandas_df
     
-    def extract_fields(self, results):
-        """"""
-        item, itemLabel = results['head']['vars']
-        print(item, itemLabel)
-        print(results['results']['binding'])
+    def extract_fields(self, rows:list) -> tuple([str, str]):
+        """ Extracts the imdb_id and movie title from each row in the table list """
+        
+        for row in rows:
+            imdb_id = row['item']['value'].split("/")[-1]
+            title = row['itemLabel']['value']
+            if imdb_id != title:
+                yield (imdb_id, title)
+
