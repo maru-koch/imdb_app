@@ -8,6 +8,19 @@ from queue import Queue
 @dataclass
 class WikiDataWorker:
 
+    """
+
+    Retrieves data from url provide using sparqlwrapper, extracts the field values, 
+    and adds a tuple containing the values of the imdb_id and movie title to queue
+
+    :url - https://www.wikidata.org/sparql:
+
+    :query - query string to retrieve the movie records from 2013 to 2023:
+
+    :queque - container datatype that holds the value of the imdb_id and the title 
+    to be accessed by the PostgreSQL scheduler
+
+    """
     url:str
     query:str 
     queue:Queue
@@ -27,6 +40,8 @@ class WikiDataWorker:
         self.queue.put(None)
 
     def fetch_wikidata(self, url:str, query:str)->dict:
+        """ Retrieves the movie data """
+        
         sparql = SPARQLWrapper(url)
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
