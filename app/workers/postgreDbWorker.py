@@ -6,8 +6,28 @@ from dataclasses import dataclass
 from decouple import config
 
 class ImDBScheduler(threading.Thread):
-    def __init__(self, **kwargs) -> None:
+    """
+    :insert_data: inserts data into the movies table in the database
+    """
+    def __init__(self, data_queue, **kwargs) -> None:
         super(PostgresDbWorker, self).__init__(**kwargs)
+        self.start()
+        self.pgworker = PostgresDbWorker()
+        self.queue = data_queue
+
+    def run(self):
+        self.insert_data()
+
+    def insert_data(self)->None:
+        """ 
+        Retrieves the queued records to be inserted into the 
+        database and store them in the database table 
+        """
+        while True:
+            record = self.queue.get()
+            if record == None:
+                break
+            self.pgworker.save_data(*record)
 
 @dataclass
 class PostgresDbWorker():
@@ -20,7 +40,7 @@ class PostgresDbWorker():
         host=config("HOST"))
     
     cur = conn.cursor()
-    
+
     def create_table(self):
         """ creates a db table if not exists """
 
