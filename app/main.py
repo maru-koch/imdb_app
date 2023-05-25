@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup as Bs
 import psycopg2
 import requests
+import bs4
 
 from dataclasses import dataclass
 from typing import Optional
@@ -15,9 +16,9 @@ class IMDB:
     def fetch_webpage(self):
         """ get the webpage of the specified url and extract the relevant value from the html elements """
         response = requests.get(self.url)
-        soup = Bs(response.text, 'html.parse')
+        soup = Bs(response.text, 'html.parser')
         titles = soup.select('div.title')
-        print("content", response.content)
+        print("content", response.json())
 
     def extract(self):
         """"""
@@ -43,7 +44,7 @@ if __name__=="__main__":
     database = config('POSTGRES_DB')
     user = config('POSTGRES_USER')
     password = config('POSTGRES_PASSWORD')
-    host = "0.0.0.0"
+    host = config("HOST")
 
     conn = psycopg2.connect(database=database, user=user, password=password, host=host)
     cur = conn.cursor()
