@@ -9,14 +9,8 @@ from typing import Optional
 class IMDB:
 
     conn:psycopg2.connect
-    cur:psycopg2.cursor
+    cur:None
     url:str
-
-    def connect(self):
-        """ connects to the database """
-        pass
-
-  
 
     def fetch_webpage(self):
         """ get the webpage of the specified url and extract the relevant value from the html elements """
@@ -24,6 +18,9 @@ class IMDB:
         soup = Bs(response.text, 'html.parse')
         titles = soup.select('div.title')
         print("content", response.content)
+
+    def extract(self):
+        """"""
 
     def save_data(self, tableName:str, **kwargs:dict):
         """ commits data to the database """
@@ -43,14 +40,17 @@ if __name__=="__main__":
 
     from decouple import config
 
-    database = config('POSTGRE_DB')
-    user = config('POSTGRE_USER')
-    password = config('POSTGRE_PASSWORD')
+    database = config('POSTGRES_DB')
+    user = config('POSTGRES_USER')
+    password = config('POSTGRES_PASSWORD')
     host = "0.0.0.0"
 
     conn = psycopg2.connect(database=database, user=user, password=password, host=host)
     cur = conn.cursor()
-    url = " https://query.wikidata.org/"
+
+    url = "https://query.wikidata.org/"
+
+    url = "https://w.wiki/6kYf"
 
     imdb = IMDB(conn, cur, url)
     imdb.fetch_webpage()

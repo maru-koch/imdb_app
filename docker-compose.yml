@@ -1,0 +1,18 @@
+
+services:
+    database:
+        image: postgres
+        restart: always
+        port:
+          - 5432: 5432
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    app:
+        image: python:3.9-alphine
+        restart: always
+        port:
+            - 8080: 8080
+        depends_on: database
