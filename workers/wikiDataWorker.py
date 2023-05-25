@@ -1,4 +1,3 @@
-import threading
 from dataclasses import dataclass
 from multiprocessing import Pool, cpu_count
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -41,7 +40,7 @@ class WikiDataWorker:
 
     def fetch_wikidata(self, url:str, query:str)->dict:
         """ Retrieves the movie data """
-        
+
         sparql = SPARQLWrapper(url)
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
