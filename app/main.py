@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup as Bs
+from SPARQLWrapper import SPARQLWrapper, JSON
+import pandas as pd
 import psycopg2
 import requests
 import bs4
@@ -13,15 +15,29 @@ class IMDB:
     cur:None
     url:str
 
-    def fetch_webpage(self):
-        """ get the webpage of the specified url and extract the relevant value from the html elements """
-        response = requests.get(self.url)
-        soup = Bs(response.text, 'html.parser')
-        titles = soup.select('div.title')
-        print("content", response.json())
+    def fetch_wikidata(self, query:str)->dict:
 
-    def extract(self):
+        """ gets the data from wikidata.org based on the query supplied """
+
+        sparql = SPARQLWrapper(self.url)
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+        return results
+
+    def convert_to_pandas_df(self, results:dict) -> pd.DataFrame:
+
+        """ converts the results obtained from wikidata to pandas dataframe """
+
+        results_df = pd.io.json._normalize(results['results']['bindings'])
+        pandas_df = results_df[['item.value', 'itemLabel.value']]
+        return pandas_df
+    
+    def extract_fields(self, results):
         """"""
+        item, itemLabel = data['head']['vars']
+        print(item, itemLabel)
+        print(data['results'])
 
     def save_data(self, tableName:str, **kwargs:dict):
         """ commits data to the database """
@@ -49,9 +65,19 @@ if __name__=="__main__":
     conn = psycopg2.connect(database=database, user=user, password=password, host=host)
     cur = conn.cursor()
 
-    url = "https://query.wikidata.org/"
+    url = "https://query.wikidata.org/sparql"
 
-    url = "https://w.wiki/6kYf"
-
+    query= """
+            SELECT DISTINCT ?item ?itemLabel WHERE {
+            ?item wdt:P31 wd:Q11424.
+            ?item wdt:P577 ?pubdate.
+            FILTER((?pubdate >= "2013-01-01T00:00:00Z"^^xsd:dateTime) && (?pubdate <= "2023-12-31T00:00:00Z"^^xsd:dateTime))
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+            }
+            """
     imdb = IMDB(conn, cur, url)
-    imdb.fetch_webpage()
+    data = imdb.fetch_wikidata(query=query)
+    item, itemLabel = data['head']['vars']
+    print(item, itemLabel)
+    results = data['results']['bindings']
+    data = results[0]
