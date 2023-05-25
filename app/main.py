@@ -39,30 +39,15 @@ class IMDB:
         print(item, itemLabel)
         print(data['results'])
 
-    def save_data(self, tableName:str, **kwargs:dict):
-        """ commits data to the database """
-        query = f""" INSERT INTO {tableName.upper()} ({kwargs.keys()}) VALUES ({kwargs.values()})"""
-        self.execute_query(query)
-
-    def execute_query(self, query:str):
-        """ executes a given query parameter """
-        return self.cur.execute(query)
     
-    def close(self):
-        """ closes the database """
-        self.cur.close()
-        self.conn.close()
     
 if __name__=="__main__":
 
     from decouple import config
 
-    database = config('POSTGRES_DB')
-    user = config('POSTGRES_USER')
-    password = config('POSTGRES_PASSWORD')
-    host = config("HOST")
+    
 
-    conn = psycopg2.connect(database=database, user=user, password=password, host=host)
+    
     cur = conn.cursor()
 
     url = "https://query.wikidata.org/sparql"
@@ -80,4 +65,5 @@ if __name__=="__main__":
     item, itemLabel = data['head']['vars']
     print(item, itemLabel)
     results = data['results']['bindings']
-    data = results[0]
+    
+    
